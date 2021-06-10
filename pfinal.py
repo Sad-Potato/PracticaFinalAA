@@ -6,6 +6,14 @@ import sklearn as sk
 import pandas as pd
 import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
+from sklearn.feature_selection import VarianceThreshold
+from sklearn.neighbors import LocalOutlierFactor
+from sklearn.decomposition import PCA
+from sklearn.metrics import accuracy_score
+from sklearn.model_selection import KFold
+
+# Modelos
+from sklearn.linear_model import LogisticRegression
 
 # Fijamos la semilla de las componentes aleatorias
 np.random.seed(42)
@@ -24,6 +32,12 @@ Y=np.empty(np.size(Data[:,0])) # Clases como numeros
 for i in np.arange(np.size(Yn)):
     Y[i]=ord(Yn[i])-65
 
+
+# Eliminamos datos sin variabilidad si los hay (data snooping?)
+
+selector = VarianceThreshold()
+X=selector.fit_transform(X,Y)
+
 # Dividimos los datos en training y test
 '''
     Dividimos en training y test, con un tamaño de test del 20% de la muestra, 
@@ -41,6 +55,22 @@ cabecera = ['C' + str(i) for i in range(X_train.shape[1])]    # Formateo de colu
 cabecera.append('letra')
 dataTrain = pd.concat([pd.DataFrame(X_train), pd.DataFrame(y_train.reshape(-1, 1))], axis = 1)
 dataTrain.set_axis(cabecera, axis=1, inplace=True)
+
+
+# Eliminamos outliers
+"""
+    Eliminamos valores extremos, es decir instancias en cuales no un
+    atributo esta "alejado" de los demas si no que en su conjunto esta 
+    alejada del resto de instancias
+"""
+# OUTLIERS CON LOCAL OUTLIER FACTOR
+
+clf = LocalOutlierFactor(contamination=0.05) # Eliminamos un 5% de outliers o probar con contamination='auto'?
+outliers=np.where(clf.fit_predict(X_train)==-1)
+X_train=np.delete(X_train,outliers,0)
+y_train=np.delete(y_train,outliers,0)
+
+
 
 # Exploración y análisis de datos
 """
@@ -80,6 +110,9 @@ scaler = sk.preprocessing.StandardScaler().fit(X_train)
 X_train_scaled = scaler.transform(X_train)
 dataTrainScaled = pd.DataFrame(np.concatenate((X_train_scaled, y_train.reshape(-1,1)), axis = 1),
                                columns = dataTrain.columns)
+
+# normalizamos tambien el test?¿
+X_test=scaler.transform(X_test)
                             
 
 # Boxplot de las distintas variables continuas tras estandarización
@@ -104,3 +137,41 @@ plt.show()
 
 print("Gráfica de la matriz de correlaciones")
 input("\n--- Pulsar tecla para continuar ---\n")
+
+
+# Tecnica de reduccion de dimensionalidad PCA / en el caso de lo usemos 
+"""
+    Usamos la tecnica de PCA, la idea detras de esto es reducir el 
+    número de variables manteniendo la maxima cantidad de informacion.
+    En nuestro caso aplicamos PCA manteniendo un 95% de la varianza de los datos
+
+"""
+
+print("\n--------- PCA ---------")
+pca = PCA(0.95,svd_solver='full')
+dim_antes=np.shape(X_train)[1]
+X_train = pca.fit_transform(X_train)
+dim_despues=np.shape(X_train)[1]
+X_test=pca.transform(X_test)
+print("Aportación de los componentes: [",pca.explained_variance_ratio_[0],",",pca.explained_variance_ratio_[1],"...]")
+print("Reducción de dimensionalidad: ",dim_antes," -> ",dim_despues)
+
+plt.scatter(X_train[:,0],X_train[:,1],c=y_train)
+plt.show()
+
+input("\n--- Pulsar tecla para continuar ---\n")
+
+
+# Esquema de uso de cross-validation con Kfold
+
+n=10 # Numero de folds
+kf=KFold(n)
+mean_accuracy=0
+for train_index, test_index in kf.split(X_train):
+    clf=LogisticRegression(multi_class='multinomial'
+        ,penalty='l2',solver='lbfgs',max_iter=1500).fit(X_train[train_index],y_train[train_index])
+    mean_accuracy+=accuracy_score(y_train[test_index],clf.predict(X_train[test_index]))
+mean_accuracy=mean_accuracy/n
+
+
+
