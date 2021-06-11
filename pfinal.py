@@ -11,10 +11,12 @@ from sklearn.neighbors import LocalOutlierFactor
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
+from sklearn.model_selection import GridSearchCV
 
 # Modelos
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
+from sklearn.svm import SVC
 def warn(*args, **kwargs):
     pass
 import warnings
@@ -193,24 +195,11 @@ input("\n--- Pulsar tecla para continuar ---\n")
 #------------------------ Modelos con cross-validation ---------------------------#
 #---------------------------------------------------------------------------------#
 
-# Esquema de uso de cross-validation con Kfold
-
-# n=10 # Numero de folds
-# kf=KFold(n)
-# mean_accuracy=0
-# for train_index, test_index in kf.split(X_train):
-#     clf=LogisticRegression(multi_class='multinomial'
-#         ,penalty='l2',solver='lbfgs',max_iter=1500).fit(X_train[train_index],y_train[train_index])
-#     mean_accuracy+=accuracy_score(y_train[test_index],clf.predict(X_train[test_index]))
-# mean_accuracy=mean_accuracy/n
-# print(mean_accuracy)
-
-
-# Grid search ?
+# Usamos grid search
 
 ##################### Regresión logística ##########################
 
-from sklearn.model_selection import GridSearchCV
+
 # parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':[1500]}
 # lr = LogisticRegression()
 # clf = GridSearchCV(lr,parameters,cv=10)
@@ -229,18 +218,18 @@ from sklearn.model_selection import GridSearchCV
 ##################### Perceptron multicapa #########################
 
 
-# parameters = {'hidden_layer_sizes':[(50,50)],'activation':['tanh'],'solver':['adam'],
-#             'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[100],'n_iter_no_change':[3],'alpha':[0.001]} # Faltan
+# parameters = {'hidden_layer_sizes':[(50,50),(75,75),(100,100)],'activation':['tanh'],'solver':['adam'],
+#             'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[100],'n_iter_no_change':[3],'alpha':[0.01],'batch_size':[64]} # Faltan
 # mlp = MLPClassifier()
-# clf = GridSearchCV(mlp,parameters,cv=5)
+# clf = GridSearchCV(mlp,parameters,cv=10,n_jobs=-1)
 # clf.fit(X_train, y_train)
 
-mlp=MLPClassifier((100, 100), solver = 'adam', batch_size = 64, alpha = 0.01)
-mlp.fit(X_train,y_train)
-print(mlp.score(X_train,y_train))
-X_test = scaler.transform(X_test)
-X_test = pca.transform(X_test)
-print(mlp.score(X_test, y_test))
+# # mlp=MLPClassifier((100, 100), solver = 'adam', batch_size = 64, alpha = 0.01)
+# # mlp.fit(X_train,y_train)
+# # print(mlp.score(X_train,y_train))
+# # X_test = scaler.transform(X_test)
+# # X_test = pca.transform(X_test)
+# # print(mlp.score(X_test, y_test))
 
 # # Código para visualizar los resultados de grid search
 # print("Grid scores on development set:")
@@ -256,15 +245,20 @@ print(mlp.score(X_test, y_test))
 
 ############################## SVM ##############################
 
+parameters = {'C':[1],'kernel':['rbf','poly'],'degree':[3,4,5],'gamma':['auto'],'decision_function_shape':['ovr']} # Faltan
+svc = SVC()
+clf = GridSearchCV(svc,parameters,cv=10)
+clf.fit(X_train, y_train)
 
+# Código para visualizar los resultados de grid search
+print("Grid scores on development set:")
+means = clf.cv_results_['mean_test_score']
+stds = clf.cv_results_['std_test_score']
 
-
-
-
-# print(pd.DataFrame.from_dict(clf.cv_results_))
-
-
-
+#THIS IS WHAT YOU WANT
+for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+    print("%0.3f (+/-%0.03f) for %r"
+          % (mean, std * 2, params))
 
 """
     Mejor modelo
