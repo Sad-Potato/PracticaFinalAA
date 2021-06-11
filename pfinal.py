@@ -14,6 +14,7 @@ from sklearn.model_selection import KFold
 
 # Modelos
 from sklearn.linear_model import LogisticRegression
+from sklearn.neural_network import MLPClassifier
 
 # Fijamos la semilla de las componentes aleatorias
 np.random.seed(42)
@@ -69,6 +70,13 @@ clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outl
 outliers=np.where(clf.fit_predict(X_train)==-1)
 X_train=np.delete(X_train,outliers,0)
 y_train=np.delete(y_train,outliers,0)
+
+
+# from sklearn.ensemble import IsolationForest
+# clf = IsolationForest(random_state=0).fit(X_train)
+# outliers=np.where(clf.predict(X_train)==-1)
+# X_train=np.delete(X_train,outliers,0)
+# y_train=np.delete(y_train,outliers,0)
 
 print("Porcentaje de outliers: ",(np.size(outliers)/np.size(X_train[:,0]))*100,"%")
 
@@ -162,25 +170,53 @@ plt.show()
 input("\n--- Pulsar tecla para continuar ---\n")
 
 
+
+#####################
+
+#---------------------------------------------------------------------------------#
+#------------------------ Modelos con cross-validation ---------------------------#
+#---------------------------------------------------------------------------------#
+
 # Esquema de uso de cross-validation con Kfold
 
-n=10 # Numero de folds
-kf=KFold(n)
-mean_accuracy=0
-for train_index, test_index in kf.split(X_train):
-    clf=LogisticRegression(multi_class='multinomial'
-        ,penalty='l2',solver='lbfgs',max_iter=1500).fit(X_train[train_index],y_train[train_index])
-    mean_accuracy+=accuracy_score(y_train[test_index],clf.predict(X_train[test_index]))
-mean_accuracy=mean_accuracy/n
-print(mean_accuracy)
+# n=10 # Numero de folds
+# kf=KFold(n)
+# mean_accuracy=0
+# for train_index, test_index in kf.split(X_train):
+#     clf=LogisticRegression(multi_class='multinomial'
+#         ,penalty='l2',solver='lbfgs',max_iter=1500).fit(X_train[train_index],y_train[train_index])
+#     mean_accuracy+=accuracy_score(y_train[test_index],clf.predict(X_train[test_index]))
+# mean_accuracy=mean_accuracy/n
+# print(mean_accuracy)
 
 
 # Grid search ?
 
+##################### Regresión logística ##########################
+
 from sklearn.model_selection import GridSearchCV
-parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':[1500]}
-lr = LogisticRegression()
-clf = GridSearchCV(lr,parameters,cv=10)
+# parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':[1500]}
+# lr = LogisticRegression()
+# clf = GridSearchCV(lr,parameters,cv=10)
+# clf.fit(X_train, y_train)
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clf.cv_results_['mean_test_score']
+# stds = clf.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT ٩(◕‿◕｡)۶
+# for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+
+##################### Perceptron multicapa #########################
+
+
+parameters = {'hidden_layer_sizes':[(50,50),(100,100)],'activation':('logistic','tanh'),'solver':['sgd'],
+            'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[500]} # Faltan
+mlp = MLPClassifier()
+clf = GridSearchCV(mlp,parameters,cv=10)
 clf.fit(X_train, y_train)
 
 # Código para visualizar los resultados de grid search
@@ -192,3 +228,30 @@ stds = clf.cv_results_['std_test_score']
 for mean, std, params in zip(means, stds, clf.cv_results_['params']):
     print("%0.3f (+/-%0.03f) for %r"
           % (mean, std * 2, params))
+
+
+
+############################## SVM ##############################
+
+
+
+
+
+
+# print(pd.DataFrame.from_dict(clf.cv_results_))
+
+
+
+
+"""
+    Mejor modelo
+
+
+"""
+
+#---------------------------------------------------------------------------------#
+#---------------------- Selección de la mejor hipotesis --------------------------#
+#---------------------------------------------------------------------------------#
+
+# Seleccionamos la mejor hipotesis de entre las que hemos 
+# considerado en cross-validation
