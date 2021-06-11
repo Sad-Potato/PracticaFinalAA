@@ -244,10 +244,10 @@ input("\n--- Pulsar tecla para continuar ---\n")
 
 
 ############################## SVM ##############################
-
-parameters = {'C':[1],'kernel':['rbf','poly'],'degree':[3,4,5],'gamma':['auto'],'decision_function_shape':['ovr']} # Faltan
+                                # grid search utiliza los degrees para hacer combinaciones con rbf a pesar de que no los usa :/
+parameters = {'C':[1],'kernel':['rbf','poly'],'degree':[3,4,5],'gamma':[1,5,10],'decision_function_shape':['ovr']} # 8 min ~
 svc = SVC()
-clf = GridSearchCV(svc,parameters,cv=10)
+clf = GridSearchCV(svc,parameters,cv=10,n_jobs=-1)
 clf.fit(X_train, y_train)
 
 # Código para visualizar los resultados de grid search
