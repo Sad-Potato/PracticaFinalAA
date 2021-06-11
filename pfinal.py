@@ -289,7 +289,7 @@ input("\n--- Pulsar tecla para continuar ---\n")
     Mejor modelo
     SVM con kernel RBF C = 10, gamma = 0.15
 """
-svc = MLPClassifier((100, 100), activation = 'tanh', alpha = 0.001)
+svc = SVC(C = 10, gamma = 0.15)
 svc.fit(X_train, y_train)
 print(svc.score(X_train,y_train))
 X_test = scaler.transform(X_test)
