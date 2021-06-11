@@ -65,12 +65,12 @@ dataTrain.set_axis(cabecera, axis=1, inplace=True)
 """
 # OUTLIERS CON LOCAL OUTLIER FACTOR
 
-# clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'?
-# outliers=np.where(clf.fit_predict(X_train)==-1)
-# X_train=np.delete(X_train,outliers,0)
-# y_train=np.delete(y_train,outliers,0)
+clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'?
+outliers=np.where(clf.fit_predict(X_train)==-1)
+X_train=np.delete(X_train,outliers,0)
+y_train=np.delete(y_train,outliers,0)
 
-
+print("Porcentaje de outliers: ",(np.size(outliers)/np.size(X_train[:,0]))*100,"%")
 
 # Exploración y análisis de datos
 """
@@ -83,7 +83,7 @@ dataTrain.set_axis(cabecera, axis=1, inplace=True)
     Estadísticos de cada característico: información estadística
 """ 
 
-# Histograma de frecuencia de cada clase
+# # Histograma de frecuencia de cada clase
 # plt.figure(figsize = (9, 6))
 # ax = dataTrain['letra'].plot.hist(bins = np.arange(27) - 0.5, ec = 'black', xticks=np.arange(26), rot = 45)
 # ax.set_xlabel("Clases")
