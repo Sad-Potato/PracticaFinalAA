@@ -65,10 +65,10 @@ dataTrain.set_axis(cabecera, axis=1, inplace=True)
 """
 # OUTLIERS CON LOCAL OUTLIER FACTOR
 
-clf = LocalOutlierFactor(contamination=0.05) # Eliminamos un 5% de outliers o probar con contamination='auto'?
-outliers=np.where(clf.fit_predict(X_train)==-1)
-X_train=np.delete(X_train,outliers,0)
-y_train=np.delete(y_train,outliers,0)
+# clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'?
+# outliers=np.where(clf.fit_predict(X_train)==-1)
+# X_train=np.delete(X_train,outliers,0)
+# y_train=np.delete(y_train,outliers,0)
 
 
 
@@ -84,25 +84,25 @@ y_train=np.delete(y_train,outliers,0)
 """ 
 
 # Histograma de frecuencia de cada clase
-plt.figure(figsize = (9, 6))
-ax = dataTrain['letra'].plot.hist(bins = np.arange(27) - 0.5, ec = 'black', xticks=np.arange(26), rot = 45)
-ax.set_xlabel("Clases")
-ax.set_ylabel("Frecuencia")
-plt.title("Histograma de frecuencia")
-plt.show()
+# plt.figure(figsize = (9, 6))
+# ax = dataTrain['letra'].plot.hist(bins = np.arange(27) - 0.5, ec = 'black', xticks=np.arange(26), rot = 45)
+# ax.set_xlabel("Clases")
+# ax.set_ylabel("Frecuencia")
+# plt.title("Histograma de frecuencia")
+# plt.show()
 
-print("Histograma de frecuencias agrupado por clases")
-input("\n--- Pulsar tecla para continuar ---\n")
+# print("Histograma de frecuencias agrupado por clases")
+# input("\n--- Pulsar tecla para continuar ---\n")
 
-# Boxplot de las distintas características
-plt.figure(figsize = (20, 10))
-plt.xlabel("Características del problema")
-boxplot = dataTrain[dataTrain.columns[0:-1]].boxplot()
-plt.title("Boxplot de cada característica")
-plt.show()
+# # Boxplot de las distintas características
+# plt.figure(figsize = (20, 10))
+# plt.xlabel("Características del problema")
+# boxplot = dataTrain[dataTrain.columns[0:-1]].boxplot()
+# plt.title("Boxplot de cada característica")
+# plt.show()
 
-print("Boxplot para cada característica del problema")
-input("\n--- Pulsar tecla para continuar ---\n")
+# print("Boxplot para cada característica del problema")
+# input("\n--- Pulsar tecla para continuar ---\n")
 
 # Muy poca información visual debido a valores anormales
 # Hay que estandarizar los datos
@@ -115,31 +115,31 @@ dataTrainScaled = pd.DataFrame(np.concatenate((X_train_scaled, y_train.reshape(-
 X_test=scaler.transform(X_test)
                             
 
-# Boxplot de las distintas variables continuas tras estandarización
-plt.figure(figsize = (20, 10))
-plt.xlabel("Variables del problema")
-boxplot = dataTrainScaled[dataTrainScaled.columns[0:-1]].boxplot()
-plt.title("Boxplot de cada variable tras estandarización")
-plt.show()
+# # Boxplot de las distintas variables continuas tras estandarización
+# plt.figure(figsize = (20, 10))
+# plt.xlabel("Variables del problema")
+# boxplot = dataTrainScaled[dataTrainScaled.columns[0:-1]].boxplot()
+# plt.title("Boxplot de cada variable tras estandarización")
+# plt.show()
 
-print("Boxplot para cada característica del problema tras estandarización")
-input("\n--- Pulsar tecla para continuar ---\n")
+# print("Boxplot para cada característica del problema tras estandarización")
+# input("\n--- Pulsar tecla para continuar ---\n")
 
-# Mostrar gráfica de la matriz de correlaciones
-f = plt.figure(figsize=(22, 15))
-plt.matshow(dataTrain[dataTrain.columns[0:-1]].corr(), fignum=f.number)
-plt.xticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14, rotation=45)
-plt.yticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14)
-cb = plt.colorbar()
-cb.ax.tick_params(labelsize=14)
-plt.title('Correlation Matrix', fontsize=16)
-plt.show()
+# # Mostrar gráfica de la matriz de correlaciones
+# f = plt.figure(figsize=(22, 15))
+# plt.matshow(dataTrain[dataTrain.columns[0:-1]].corr(), fignum=f.number)
+# plt.xticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14, rotation=45)
+# plt.yticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14)
+# cb = plt.colorbar()
+# cb.ax.tick_params(labelsize=14)
+# plt.title('Correlation Matrix', fontsize=16)
+# plt.show()
 
-print("Gráfica de la matriz de correlaciones")
-input("\n--- Pulsar tecla para continuar ---\n")
+# print("Gráfica de la matriz de correlaciones")
+# input("\n--- Pulsar tecla para continuar ---\n")
 
 
-# Tecnica de reduccion de dimensionalidad PCA / en el caso de lo usemos 
+# Tecnica de reduccion de dimensionalidad PCA / ?¿ Solo si me mejoran los resultados (guion)
 """
     Usamos la tecnica de PCA, la idea detras de esto es reducir el 
     número de variables manteniendo la maxima cantidad de informacion.
@@ -172,6 +172,15 @@ for train_index, test_index in kf.split(X_train):
         ,penalty='l2',solver='lbfgs',max_iter=1500).fit(X_train[train_index],y_train[train_index])
     mean_accuracy+=accuracy_score(y_train[test_index],clf.predict(X_train[test_index]))
 mean_accuracy=mean_accuracy/n
+print(mean_accuracy)
 
 
+# Grid search ?
+
+from sklearn.model_selection import GridSearchCV
+parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':[1500]}
+lr = LogisticRegression()
+clf = GridSearchCV(lr,parameters,cv=10)
+clf.fit(X_train, y_train)
+print(clf.cv_results_) # pandas?
 
