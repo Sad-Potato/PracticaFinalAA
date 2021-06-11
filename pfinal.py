@@ -65,7 +65,7 @@ dataTrain.set_axis(cabecera, axis=1, inplace=True)
 """
 # OUTLIERS CON LOCAL OUTLIER FACTOR
 
-clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'?
+clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'? // Yo pondría como máximo 5%
 outliers=np.where(clf.fit_predict(X_train)==-1)
 X_train=np.delete(X_train,outliers,0)
 y_train=np.delete(y_train,outliers,0)
@@ -111,7 +111,7 @@ X_train_scaled = scaler.transform(X_train)
 dataTrainScaled = pd.DataFrame(np.concatenate((X_train_scaled, y_train.reshape(-1,1)), axis = 1),
                                columns = dataTrain.columns)
 
-# normalizamos tambien el test?¿
+# normalizamos tambien el test?¿ Sí, pero al final para que Nicolás no se raye
 X_test=scaler.transform(X_test)
                             
 
@@ -156,7 +156,7 @@ X_test=pca.transform(X_test)
 print("Aportación de los componentes: [",pca.explained_variance_ratio_[0],",",pca.explained_variance_ratio_[1],"...]")
 print("Reducción de dimensionalidad: ",dim_antes," -> ",dim_despues)
 
-plt.scatter(X_train[:,0],X_train[:,1],c=y_train)
+plt.scatter(X_train[:,0],X_train[:,1],c=y_train) # Los puntos no dan mucha información no? Una alternativa sería t-SNE pero Nicolás igual se raya
 plt.show()
 
 input("\n--- Pulsar tecla para continuar ---\n")
@@ -182,5 +182,13 @@ parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':
 lr = LogisticRegression()
 clf = GridSearchCV(lr,parameters,cv=10)
 clf.fit(X_train, y_train)
-print(clf.cv_results_) # pandas?
 
+# Código para visualizar los resultados de grid search
+print("Grid scores on development set:")
+means = clf.cv_results_['mean_test_score']
+stds = clf.cv_results_['std_test_score']
+
+#THIS IS WHAT YOU WANT
+for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+    print("%0.3f (+/-%0.03f) for %r"
+          % (mean, std * 2, params))
