@@ -15,6 +15,10 @@ from sklearn.model_selection import KFold
 # Modelos
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
 
 # Fijamos la semilla de las componentes aleatorias
 np.random.seed(42)
@@ -66,8 +70,8 @@ dataTrain.set_axis(cabecera, axis=1, inplace=True)
 """
 # OUTLIERS CON LOCAL OUTLIER FACTOR
 
-clf = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'? // Yo pondría como máximo 5%
-outliers=np.where(clf.fit_predict(X_train)==-1)
+lof = LocalOutlierFactor(contamination=0.05) # Eliminamos como maximo 5% de outliers o probar con contamination='auto'? // Yo pondría como máximo 5%
+outliers=np.where(lof.fit_predict(X_train)==-1)
 X_train=np.delete(X_train,outliers,0)
 y_train=np.delete(y_train,outliers,0)
 
@@ -213,11 +217,15 @@ from sklearn.model_selection import GridSearchCV
 ##################### Perceptron multicapa #########################
 
 
-parameters = {'hidden_layer_sizes':[(50,50),(100,100)],'activation':('logistic','tanh'),'solver':['sgd'],
-            'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[500]} # Faltan
+parameters = {'hidden_layer_sizes':[(50,50)],'activation':['tanh'],'solver':['adam'],
+            'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[100],'n_iter_no_change':[3],'alpha':[0.001]} # Faltan
 mlp = MLPClassifier()
-clf = GridSearchCV(mlp,parameters,cv=10)
+clf = GridSearchCV(mlp,parameters,cv=5)
 clf.fit(X_train, y_train)
+
+# mlp=MLPClassifier((50,50))
+# mlp.fit(X_train,y_train)
+# print(mlp.score(X_train,y_train))
 
 # Código para visualizar los resultados de grid search
 print("Grid scores on development set:")
