@@ -2,6 +2,12 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+
+def warn(*args, **kwargs):
+    pass
+import warnings
+warnings.warn = warn
+
 import sklearn as sk
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -17,10 +23,6 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
-def warn(*args, **kwargs):
-    pass
-import warnings
-warnings.warn = warn
 
 # Fijamos la semilla de las componentes aleatorias
 np.random.seed(42)
@@ -217,11 +219,12 @@ input("\n--- Pulsar tecla para continuar ---\n")
 
 ##################### Perceptron multicapa #########################
 
+# ~13 min con Ryzen5 2600 3.7GHz 12 cores
 
-# parameters = {'hidden_layer_sizes':[(50,50),(75,75),(100,100)],'activation':['tanh'],'solver':['adam'],
-#             'learning_rate':['adaptive'],'shuffle':[True],'max_iter':[100],'n_iter_no_change':[3],'alpha':[0.01],'batch_size':[64]} # Faltan
-# mlp = MLPClassifier()
-# clf = GridSearchCV(mlp,parameters,cv=10,n_jobs=-1)
+# parameters = {'hidden_layer_sizes':[(50,50), (75, 75), (100, 100)],'activation':('tanh', 'logistic'),
+#               'alpha':[1e-3, 1e-4, 1e-5]} # Faltan
+# mlp = MLPClassifier(batch_size = 64, random_state = 42)
+# clf = GridSearchCV(mlp,parameters,cv = 10, n_jobs = -1)
 # clf.fit(X_train, y_train)
 
 # # mlp=MLPClassifier((100, 100), solver = 'adam', batch_size = 64, alpha = 0.01)
@@ -238,33 +241,60 @@ input("\n--- Pulsar tecla para continuar ---\n")
 
 # #THIS IS WHAT YOU WANT
 # for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-#     print("%0.3f (+/-%0.03f) for %r"
+#     print("%0.4f (+/-%0.03f) for %r"
 #           % (mean, std * 2, params))
 
 
 
 ############################## SVM ##############################
-                                # grid search utiliza los degrees para hacer combinaciones con rbf a pesar de que no los usa :/
-parameters = {'C':[1],'kernel':['rbf','poly'],'degree':[3,4,5],'gamma':[1,5,10],'decision_function_shape':['ovr']} # 8 min ~
-svc = SVC()
-clf = GridSearchCV(svc,parameters,cv=10,n_jobs=-1)
-clf.fit(X_train, y_train)
 
-# Código para visualizar los resultados de grid search
-print("Grid scores on development set:")
-means = clf.cv_results_['mean_test_score']
-stds = clf.cv_results_['std_test_score']
+# svc = SVC()
+# svc.fit(X_train, y_train)
+# print(svc.score(X_train,y_train))
+# X_test = scaler.transform(X_test)
+# X_test = pca.transform(X_test)
+# print(svc.score(X_test, y_test))
 
-#THIS IS WHAT YOU WANT
-for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-    print("%0.3f (+/-%0.03f) for %r"
-          % (mean, std * 2, params))
+
+# parametersRBF = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85]}
+# parametersPOLY = {'kernel':['poly'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85], 'degree':[5, 8], 'coef0':[0.15, 0.85]}
+# svc = SVC(random_state = 42)
+# clfPOLY = GridSearchCV(svc,parametersPOLY,cv=10,n_jobs=-1)
+# clfRBF = GridSearchCV(svc,parametersRBF,cv=10,n_jobs=-1)
+# clfPOLY.fit(X_train, y_train)
+# clfRBF.fit(X_train, y_train)
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clfPOLY.cv_results_['mean_test_score']
+# stds = clfPOLY.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT
+# for mean, std, params in zip(means, stds, clfPOLY.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+    
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clfRBF.cv_results_['mean_test_score']
+# stds = clfRBF.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT
+# for mean, std, params in zip(means, stds, clfRBF.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
 
 """
     Mejor modelo
-
-
+    SVM con kernel RBF C = 10, gamma = 0.15
 """
+svc = MLPClassifier((100, 100), activation = 'tanh', alpha = 0.001)
+svc.fit(X_train, y_train)
+print(svc.score(X_train,y_train))
+X_test = scaler.transform(X_test)
+X_test = pca.transform(X_test)
+print(svc.score(X_test, y_test))
 
 #---------------------------------------------------------------------------------#
 #---------------------- Selección de la mejor hipotesis --------------------------#
