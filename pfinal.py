@@ -2,6 +2,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 def warn(*args, **kwargs):
     pass
@@ -9,8 +10,6 @@ import warnings
 warnings.warn = warn
 
 import sklearn as sk
-import pandas as pd
-import matplotlib.pyplot as plt
 from sklearn.model_selection import train_test_split
 from sklearn.feature_selection import VarianceThreshold
 from sklearn.neighbors import LocalOutlierFactor
@@ -18,6 +17,7 @@ from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
+from sklearn.metrics import plot_confusion_matrix
 
 # Modelos
 from sklearn.linear_model import LogisticRegression
@@ -176,14 +176,16 @@ input("\n--- Pulsar tecla para continuar ---\n")
 print("\n--------- PCA ---------")
 pca = PCA(0.95,svd_solver='full')
 dim_antes=np.shape(X_train)[1]
-X_train = pca.fit_transform(X_train)
-dim_despues=np.shape(X_train)[1]
+X_train_PCA = pca.fit_transform(X_train)
+dim_despues=np.shape(X_train_PCA)[1]
 print("Aportación de los componentes: [",pca.explained_variance_ratio_[0],",",pca.explained_variance_ratio_[1],"...]")
 print("Reducción de dimensionalidad: ",dim_antes," -> ",dim_despues)
 
+# Gráfica 2D
 plt.scatter(X_train[:,0],X_train[:,1],c=y_train) # Los puntos no dan mucha información no? Una alternativa sería t-SNE pero Nicolás igual se raya
 plt.show()
 
+# Gráfica 3D
 ax = plt.axes(projection='3d')
 ax.scatter3D(X_train[:,0], X_train[:,1], X_train[:,2], c=y_train);
 plt.show()
@@ -191,7 +193,9 @@ plt.show()
 input("\n--- Pulsar tecla para continuar ---\n")
 
 
-#####################
+"""
+    Datos de PCA
+"""
 
 #---------------------------------------------------------------------------------#
 #------------------------ Modelos con cross-validation ---------------------------#
@@ -201,10 +205,124 @@ input("\n--- Pulsar tecla para continuar ---\n")
 
 ##################### Regresión logística ##########################
 
+# ~5 min con Ryzen5 2600 3.7GHz 12 cores
 
-# parameters = {'multi_class':('ovr','multinomial'),'solver':['lbfgs'],'max_iter':[1500]}
-# lr = LogisticRegression()
-# clf = GridSearchCV(lr,parameters,cv=10)
+# parameters = {'multi_class':('ovr','multinomial'), 'penalty':('l1', 'l2'), 'C':[1, 10, 100, 1000]}
+# lr = LogisticRegression(solver = 'saga', max_iter = 1000, random_state = 42)
+# clf = GridSearchCV(lr,parameters,cv=10, n_jobs = -1)
+# clf.fit(X_train_PCA, y_train)
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clf.cv_results_['mean_test_score']
+# stds = clf.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT ٩(◕‿◕｡)۶
+# for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+
+##################### Perceptron multicapa #########################
+
+# ~13 min con Ryzen5 2600 3.7GHz 12 cores
+
+# parameters = {'hidden_layer_sizes':[(50,50), (75, 75), (100, 100)],'activation':('tanh', 'logistic'),
+#               'alpha':[1e-3, 1e-4, 1e-5]} # Faltan
+# mlp = MLPClassifier(batch_size = 64, random_state = 42)
+# clf = GridSearchCV(mlp,parameters,cv = 10, n_jobs = -1)
+# clf.fit(X_train_PCA, y_train)
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clf.cv_results_['mean_test_score']
+# stds = clf.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT
+# for mean, std, params in zip(means, stds, clf.cv_results_['params']):
+#     print("%0.4f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+
+
+############################## SVM ##############################
+
+# ~7 min con Ryzen5 2600 3.7GHz 12 cores
+
+# parametersRBF = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85]}
+# parametersPOLY = {'kernel':['poly'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85], 'degree':[5, 8], 'coef0':[0.15, 0.85]}
+# svc = SVC(random_state = 42)
+# clfPOLY = GridSearchCV(svc,parametersPOLY,cv=10,n_jobs=-1)
+# clfRBF = GridSearchCV(svc,parametersRBF,cv=10,n_jobs=-1)
+# clfPOLY.fit(X_train_PCA, y_train)
+# clfRBF.fit(X_train_PCA, y_train)
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clfPOLY.cv_results_['mean_test_score']
+# stds = clfPOLY.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT
+# for mean, std, params in zip(means, stds, clfPOLY.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+    
+
+# # Código para visualizar los resultados de grid search
+# print("Grid scores on development set:")
+# means = clfRBF.cv_results_['mean_test_score']
+# stds = clfRBF.cv_results_['std_test_score']
+
+# #THIS IS WHAT YOU WANT
+# for mean, std, params in zip(means, stds, clfRBF.cv_results_['params']):
+#     print("%0.3f (+/-%0.03f) for %r"
+#           % (mean, std * 2, params))
+
+################################################################
+
+
+
+"""
+    Mejor modelo
+    SVM con kernel RBF C = 10, gamma = 0.15
+"""
+
+#---------------------------------------------------------------------------------#
+#---------------------- Selección de la mejor hipotesis --------------------------#
+#---------------------------------------------------------------------------------#
+
+svc = SVC(C = 10, gamma = 0.15)
+svc.fit(X_train_PCA, y_train)
+print(svc.score(X_train_PCA,y_train))
+X_test = scaler.transform(X_test)
+X_test = pca.transform(X_test)
+print(svc.score(X_test, y_test))
+
+print("Matriz de confusión con los datos de test")
+
+fig, ax = plt.subplots(figsize=(12, 12))
+plot_confusion_matrix(svc, X_test, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
+plt.title("Confusion matrix")
+plt.show()
+
+input("\n--- Pulsar tecla para continuar ---\n")
+
+
+"""
+    Datos sin PCA
+"""
+
+#---------------------------------------------------------------------------------#
+#------------------------ Modelos con cross-validation ---------------------------#
+#---------------------------------------------------------------------------------#
+
+# Usamos grid search
+
+##################### Regresión logística ##########################
+
+# ~5 min con Ryzen5 2600 3.7GHz 12 cores
+
+# parameters = {'multi_class':('ovr','multinomial'), 'penalty':('l1', 'l2'), 'C':[1, 10, 100, 1000]}
+# lr = LogisticRegression(solver = 'saga', max_iter = 1000, random_state = 42)
+# clf = GridSearchCV(lr,parameters,cv=10, n_jobs = -1)
 # clf.fit(X_train, y_train)
 
 # # Código para visualizar los resultados de grid search
@@ -227,13 +345,6 @@ input("\n--- Pulsar tecla para continuar ---\n")
 # clf = GridSearchCV(mlp,parameters,cv = 10, n_jobs = -1)
 # clf.fit(X_train, y_train)
 
-# # mlp=MLPClassifier((100, 100), solver = 'adam', batch_size = 64, alpha = 0.01)
-# # mlp.fit(X_train,y_train)
-# # print(mlp.score(X_train,y_train))
-# # X_test = scaler.transform(X_test)
-# # X_test = pca.transform(X_test)
-# # print(mlp.score(X_test, y_test))
-
 # # Código para visualizar los resultados de grid search
 # print("Grid scores on development set:")
 # means = clf.cv_results_['mean_test_score']
@@ -245,16 +356,9 @@ input("\n--- Pulsar tecla para continuar ---\n")
 #           % (mean, std * 2, params))
 
 
-
 ############################## SVM ##############################
 
-# svc = SVC()
-# svc.fit(X_train, y_train)
-# print(svc.score(X_train,y_train))
-# X_test = scaler.transform(X_test)
-# X_test = pca.transform(X_test)
-# print(svc.score(X_test, y_test))
-
+# ~7 min con Ryzen5 2600 3.7GHz 12 cores
 
 # parametersRBF = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85]}
 # parametersPOLY = {'kernel':['poly'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85], 'degree':[5, 8], 'coef0':[0.15, 0.85]}
@@ -285,20 +389,30 @@ input("\n--- Pulsar tecla para continuar ---\n")
 #     print("%0.3f (+/-%0.03f) for %r"
 #           % (mean, std * 2, params))
 
-"""
-    Mejor modelo
-    SVM con kernel RBF C = 10, gamma = 0.15
-"""
-svc = SVC(C = 10, gamma = 0.15)
-svc.fit(X_train, y_train)
-print(svc.score(X_train,y_train))
-X_test = scaler.transform(X_test)
-X_test = pca.transform(X_test)
-print(svc.score(X_test, y_test))
+################################################################
 
-#---------------------------------------------------------------------------------#
-#---------------------- Selección de la mejor hipotesis --------------------------#
-#---------------------------------------------------------------------------------#
 
-# Seleccionamos la mejor hipotesis de entre las que hemos 
-# considerado en cross-validation
+
+# """
+#     Mejor modelo
+#     SVM con kernel RBF C = 10, gamma = 0.15
+# """
+
+# #---------------------------------------------------------------------------------#
+# #---------------------- Selección de la mejor hipotesis --------------------------#
+# #---------------------------------------------------------------------------------#
+
+# svc = SVC(C = 10, gamma = 0.15)
+# svc.fit(X_train, y_train)
+# print(svc.score(X_train,y_train))
+# X_test = scaler.transform(X_test)
+# print(svc.score(X_test, y_test))
+
+# print("Matriz de confusión con los datos de test")
+
+# fig, ax = plt.subplots(figsize=(12, 12))
+# plot_confusion_matrix(svc, X_test, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
+# plt.title("Confusion matrix")
+# plt.show()
+
+# input("\n--- Pulsar tecla para continuar ---\n")
