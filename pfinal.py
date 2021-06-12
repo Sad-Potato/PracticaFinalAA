@@ -13,11 +13,9 @@ warnings.warn = warn
 
 import sklearn as sk
 from sklearn.model_selection import train_test_split
-from sklearn.feature_selection import VarianceThreshold
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.decomposition import PCA
 from sklearn.metrics import accuracy_score
-from sklearn.model_selection import KFold
 from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import plot_confusion_matrix
 
@@ -61,7 +59,7 @@ for i in np.arange(np.size(Yn)):
     fichero con los datos y usamos stratify para que no haya clases infrarepresentadas.
 
 '''
-X_train, X_test, y_train, y_test = sk.model_selection.train_test_split(X,Y,test_size=0.2,random_state=42,shuffle=True,stratify=Y)
+X_train, X_test, y_train, y_test = train_test_split(X,Y,test_size=0.2,random_state=42,shuffle=True,stratify=Y)
 print("Tamaños de la bd:","\n\tTrain: ",np.size(X_train[:,0]),"\n\tTest: ",np.size(X_test[:,0]),"\n\tTotal: ",np.size(Y[:]))
 input("\n--- Pulsar tecla para continuar ---\n")
 
@@ -188,7 +186,7 @@ print("Aportación de los componentes: [",pca.explained_variance_ratio_[0],",",p
 print("Reducción de dimensionalidad: ",dim_antes," -> ",dim_despues)
 
 # Gráfica 2D
-plt.scatter(X_train_PCA[:,0],X_train_PCA[:,1],c=y_train) # Los puntos no dan mucha información no? Una alternativa sería t-SNE pero Nicolás igual se raya
+plt.scatter(X_train_PCA[:,0],X_train_PCA[:,1],c=y_train)
 plt.show()
 
 # Gráfica 3D
@@ -200,28 +198,32 @@ input("\n--- Pulsar tecla para continuar ---\n")
 
 
 """
-    Datos de PCA
+    Selección de modelos usando Cross-Validation
+        Tal y como se indicó en la sesión de dudas, si se decide aplicar PCA
+        hay que "resolver" dos problemas: uno transformando los datos con PCA
+        y otro con los datos sin utilizar PCA (es decir, se toman como conjuntos
+        de datos diferentes).
+        Es por ello que se usa 10-fold CV para cada caso.
 """
-
+"""
 #---------------------------------------------------------------------------------#
-#------------------------ Modelos con cross-validation ---------------------------#
+#-------------------------- DATOS OBTENIDOS CON PCA ------------------------------#
 #---------------------------------------------------------------------------------#
 
-# Usamos grid search
+print("CASO PCA\n\n")
 
 ##################### Regresión logística ##########################
 
 # ~5 min con Ryzen5 2600 3.7GHz 12 cores
-print("Regresion Logistica con PCA ...\n")
+print("\nRegresion Logistica con PCA ...\n")
 parameters = {'multi_class':('ovr','multinomial'), 'penalty':('l1', 'l2'), 'C':[1, 10, 100, 1000]}
 lr = LogisticRegression(solver = 'saga', max_iter = 1000, random_state = 42)
 clf = GridSearchCV(lr,parameters,cv=10, n_jobs=num_threads)
 clf.fit(X_train_PCA, y_train)
 
 # Código para visualizar los resultados de grid search
-# mostramos la media de los errores del conjunto de validacion
-# para cada split y la desviacion típica para cada combinación de 
-# atributos
+# Mostramos la media y la desviación típica de los errores del conjunto
+# de validación para cada combinación de atributos
 print("Grid scores on development set:")
 means = clf.cv_results_['mean_test_score']
 stds = clf.cv_results_['std_test_score']
@@ -233,7 +235,7 @@ for mean, std, params in zip(means, stds, clf.cv_results_['params']):
 ##################### Perceptron multicapa #########################
 
 # ~13 min con Ryzen5 2600 3.7GHz 12 cores
-print("Perceptron multicapa con PCA ...\n")
+print("\nPerceptron multicapa con PCA ...\n")
 parameters = {'hidden_layer_sizes':[(50,50), (75, 75), (100, 100)],'activation':('tanh', 'logistic'),
               'alpha':[1e-3, 1e-4, 1e-5]} # Faltan
 mlp = MLPClassifier(batch_size = 64, random_state = 42)
@@ -246,14 +248,14 @@ means = clf.cv_results_['mean_test_score']
 stds = clf.cv_results_['std_test_score']
 
 for mean, std, params in zip(means, stds, clf.cv_results_['params']):
-    print("%0.4f (+/-%0.03f) for %r"
+    print("%0.3f (+/-%0.03f) for %r"
           % (mean, std * 2, params))
 
 
 ############################## SVM ##############################
 
 # ~7 min con Ryzen5 2600 3.7GHz 12 cores
-print("SVM con PCA ...\n")
+print("\nSVM con PCA ...\n")
 parametersRBF = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85]}
 parametersPOLY = {'kernel':['poly'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85], 'degree':[5, 8], 'coef0':[0.15, 0.85]}
 svc = SVC(random_state = 42)
@@ -273,7 +275,6 @@ for mean, std, params in zip(means, stds, clfPOLY.cv_results_['params']):
     
 
 # Código para visualizar los resultados de grid search
-print("Grid scores on development set:")
 means = clfRBF.cv_results_['mean_test_score']
 stds = clfRBF.cv_results_['std_test_score']
 
@@ -283,50 +284,19 @@ for mean, std, params in zip(means, stds, clfRBF.cv_results_['params']):
 
 ################################################################
 
-
-
-"""
-    Mejor modelo
-    SVM con kernel RBF C = 10, gamma = 0.15
-"""
-
-#---------------------------------------------------------------------------------#
-#---------------------- Selección de la mejor hipotesis --------------------------#
-#---------------------------------------------------------------------------------#
-
-print("Mejor hipotesis: SVM\n")
-svc = SVC(C = 10, gamma = 0.15)
-svc.fit(X_train_PCA, y_train)
-print("Eout train: ",svc.score(X_train_PCA,y_train))
-X_test = scaler.transform(X_test)
-X_test = pca.transform(X_test)
-print("Eout test: ",svc.score(X_test, y_test))
-
-print("Matriz de confusión con los datos de test")
-
-fig, ax = plt.subplots(figsize=(12, 12))
-plot_confusion_matrix(svc, X_test, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
-plt.title("Confusion matrix")
-plt.show()
-
 input("\n--- Pulsar tecla para continuar ---\n")
 
-
-"""
-    Datos sin PCA
-"""
-
 #---------------------------------------------------------------------------------#
-#------------------------ Modelos con cross-validation ---------------------------#
+#---------------------------- DATOS SIN APLICAR PCA ------------------------------#
 #---------------------------------------------------------------------------------#
 
-# Usamos grid search
+print("CASO NO PCA\n\n")
 
 ##################### Regresión logística ##########################
 
 # ~5 min con Ryzen5 2600 3.7GHz 12 cores
 
-print("Regresión logística sin PCA ...\n")
+print("\nRegresión logística sin PCA ...\n")
 parameters = {'multi_class':('ovr','multinomial'), 'penalty':('l1', 'l2'), 'C':[1, 10, 100, 1000]}
 lr = LogisticRegression(solver = 'saga', max_iter = 1000, random_state = 42)
 clf = GridSearchCV(lr,parameters,cv=10, n_jobs=num_threads)
@@ -345,7 +315,7 @@ for mean, std, params in zip(means, stds, clf.cv_results_['params']):
 
 # ~13 min con Ryzen5 2600 3.7GHz 12 cores
 
-print("Perceptron multicapa sin PCA ...\n")
+print("\nPerceptron multicapa sin PCA ...\n")
 parameters = {'hidden_layer_sizes':[(50,50), (75, 75), (100, 100)],'activation':('tanh', 'logistic'),
               'alpha':[1e-3, 1e-4, 1e-5]} # Faltan
 mlp = MLPClassifier(batch_size = 64, random_state = 42)
@@ -366,7 +336,7 @@ for mean, std, params in zip(means, stds, clf.cv_results_['params']):
 
 # ~7 min con Ryzen5 2600 3.7GHz 12 cores
 
-print("SVM sin PCA ...\n")
+print("\nSVM sin PCA ...\n")
 parametersRBF = {'kernel':['rbf'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85]}
 parametersPOLY = {'kernel':['poly'], 'C':[1, 10, 100], 'gamma':[0.15, 0.5, 0.85], 'degree':[5, 8], 'coef0':[0.15, 0.85]}
 svc = SVC(random_state = 42)
@@ -384,7 +354,7 @@ for mean, std, params in zip(means, stds, clfPOLY.cv_results_['params']):
     print("%0.3f (+/-%0.03f) for %r"
           % (mean, std * 2, params))
 
-print("Grid scores on development set:")
+# Código para visualizar los resultados de grid search
 means = clfRBF.cv_results_['mean_test_score']
 stds = clfRBF.cv_results_['std_test_score']
 
@@ -394,18 +364,46 @@ for mean, std, params in zip(means, stds, clfRBF.cv_results_['params']):
 
 ################################################################
 
+input("\n--- Pulsar tecla para continuar ---\n")
+"""
 
+"""
+    Mejor modelo
+    PARA DATOS CON PCA: SVM con kernel RBF C = 10, gamma = 0.15
+    PARA DATOS SIN PCA: SVM con kernel RBF C = 10, gamma = 0.15
+"""
 
-# """
-#     Mejor modelo
-#     SVM con kernel RBF C = 10, gamma = 0.15
-# """
+#---------------------------------------------------------------------------------#
+#---------------------- Selección de la mejor hipotesis --------------------------#
+#---------------------------------------------------------------------------------#
 
-# #---------------------------------------------------------------------------------#
-# #---------------------- Selección de la mejor hipotesis --------------------------#
-# #---------------------------------------------------------------------------------#
+# CASO PCA
+print("CASO PCA\n")
 
-print("Mejor hipotesis: SVM\n")
+print("Mejor modelo: SVM (kernel = rbf, C = 10, gamma = 0.15)\n")
+svc = SVC(C = 10, gamma = 0.15)
+svc.fit(X_train_PCA, y_train)
+print("Eout train: ",svc.score(X_train_PCA,y_train))
+X_test_PCA = scaler.transform(X_test)
+X_test_PCA = pca.transform(X_test_PCA)
+print("Eout test: ",svc.score(X_test_PCA, y_test))
+
+print("Matriz de confusión con los datos de test")
+
+# Dibujar matriz de confusión
+fig, ax = plt.subplots(figsize=(12, 10))
+plot_confusion_matrix(svc, X_test_PCA, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
+plt.title("Confusion matrix (PCA)")
+plt.show()
+
+input("\n--- Pulsar tecla para continuar ---\n")
+
+################################################################
+
+# CASO NO PCA
+print("CASO NO PCA\n")
+
+print("Mejor modelo: SVM (kernel = rbf, C = 10, gamma = 0.15)\n")
 svc = SVC(C = 10, gamma = 0.15)
 svc.fit(X_train, y_train)
 print("Eout train: ",svc.score(X_train,y_train))
@@ -414,7 +412,10 @@ print("Eout test: ",svc.score(X_test, y_test))
 
 print("Matriz de confusión con los datos de test")
 
-fig, ax = plt.subplots(figsize=(12, 12))
+# Dibujar matriz de confusión
+fig, ax = plt.subplots(figsize=(12, 10))
 plot_confusion_matrix(svc, X_test, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
-plt.title("Confusion matrix")
+plt.title("Confusion matrix (NO PCA)")
 plt.show()
+
+################################################################
