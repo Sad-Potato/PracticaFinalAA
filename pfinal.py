@@ -80,7 +80,7 @@ dataTrain = pd.concat([pd.DataFrame(X_train), pd.DataFrame(y_train.reshape(-1, 1
 dataTrain.set_axis(cabecera, axis=1, inplace=True)
 
 # Histograma de frecuencia de cada clase
-plt.figure(figsize = (9, 6))
+plt.figure(figsize = (8, 5))
 ax = dataTrain['letra'].plot.hist(bins = np.arange(27) - 0.5, ec = 'black', xticks=np.arange(26), rot = 45)
 ax.set_xlabel("Clases")
 ax.set_ylabel("Frecuencia")
@@ -91,7 +91,7 @@ print("Histograma de frecuencias agrupado por clases")
 input("\n--- Pulsar tecla para continuar ---\n")
 
 # Boxplot de las distintas características
-plt.figure(figsize = (14, 7))
+plt.figure(figsize = (8, 5))
 plt.xlabel("Características del problema")
 boxplot = dataTrain[dataTrain.columns[0:-1]].boxplot()
 plt.title("Boxplot de cada característica")
@@ -101,13 +101,13 @@ print("Boxplot para cada característica del problema")
 input("\n--- Pulsar tecla para continuar ---\n")
 
 # Mostrar gráfica de la matriz de correlaciones
-f = plt.figure(figsize=(22, 15))
+f = plt.figure(figsize=(8, 5))
 plt.matshow(dataTrain[dataTrain.columns[0:-1]].corr(), fignum=f.number)
-plt.xticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14, rotation=45)
-plt.yticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=14)
+plt.xticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=9, rotation=45)
+plt.yticks(range(dataTrain.select_dtypes(['number']).shape[1] - 1), dataTrain.select_dtypes(['number']).columns[0:-1], fontsize=9)
 cb = plt.colorbar()
-cb.ax.tick_params(labelsize=14)
-plt.title('Correlation Matrix', fontsize=16)
+cb.ax.tick_params(labelsize=9)
+plt.title('Correlation Matrix', fontsize=11)
 plt.show()
 
 print("Gráfica de la matriz de correlaciones")
@@ -129,10 +129,10 @@ dataTrainScaled = pd.DataFrame(np.concatenate((X_train, y_train.reshape(-1,1)), 
                                columns = dataTrain.columns)
                             
 # Boxplot de las distintas variables continuas tras estandarización
-plt.figure(figsize = (14, 7))
+plt.figure(figsize = (8, 5))
 plt.xlabel("Características del problema")
 boxplot = dataTrainScaled[dataTrainScaled.columns[0:-1]].boxplot()
-plt.title("Boxplot de cada variable tras estandarización")
+plt.title("Boxplot de cada característica tras estandarización")
 plt.show()
 
 print("Estandarización de los datos")
