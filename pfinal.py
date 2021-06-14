@@ -42,6 +42,13 @@ num_threads=1
 #------------------------- Lectura de datos y preprocesado -----------------------#
 #---------------------------------------------------------------------------------#
 
+"""
+    El dataset debe de estar contenido en un carpteta llamada "datos" y dicha
+    carpeta debe estar en el mismo directorio que el script.
+    El dataset se encuentra disponible en la siguiente URL:
+        http://archive.ics.uci.edu/ml/datasets/Letter+Recognition
+"""
+
 # Lectura de la base de datos
 Data=np.loadtxt("./datos/letter-recognition.data",dtype=str,delimiter=",")
 
@@ -186,6 +193,7 @@ print("Aportación de los componentes: [",pca.explained_variance_ratio_[0],",",p
 print("Reducción de dimensionalidad: ",dim_antes," -> ",dim_despues)
 
 # Gráfica 2D
+plt.figure(figsize = (9,6))
 plt.scatter(X_train_PCA[:,0],X_train_PCA[:,1],c=y_train)
 plt.show()
 
@@ -206,11 +214,20 @@ input("\n--- Pulsar tecla para continuar ---\n")
         Es por ello que se usa 10-fold CV para cada caso.
 """
 """
+    IMPORTANTE:
+        Todo el código relacionado con Cross-validation está comentado porque
+        su ejecución (con un procesador Ryzen5 2600 3.7GHz utilizando los 12
+        cores disponibles) puede llevar hasta una hora. Los resultados que
+        se obtienen de la ejecución de dicho código están al final del script
+        (comentados). Si se desea corroborar los resultados, descomentar las líneas
+        225 y 385 y ejecutar el código.
+"""
+"""
 #---------------------------------------------------------------------------------#
 #-------------------------- DATOS OBTENIDOS CON PCA ------------------------------#
 #---------------------------------------------------------------------------------#
 
-print("CASO PCA\n\n")
+print("CASO PCA\n")
 
 ##################### Regresión logística ##########################
 
@@ -383,7 +400,7 @@ print("CASO PCA\n")
 print("Mejor modelo: SVM (kernel = rbf, C = 10, gamma = 0.15)\n")
 svc = SVC(C = 10, gamma = 0.15)
 svc.fit(X_train_PCA, y_train)
-print("Eout train: ",svc.score(X_train_PCA,y_train))
+print("Ein train: ",svc.score(X_train_PCA,y_train))
 X_test_PCA = scaler.transform(X_test)
 X_test_PCA = pca.transform(X_test_PCA)
 print("Eout test: ",svc.score(X_test_PCA, y_test))
@@ -391,7 +408,7 @@ print("Eout test: ",svc.score(X_test_PCA, y_test))
 print("Matriz de confusión con los datos de test")
 
 # Dibujar matriz de confusión
-fig, ax = plt.subplots(figsize=(12, 10))
+fig, ax = plt.subplots(figsize=(10, 8))
 plot_confusion_matrix(svc, X_test_PCA, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
 plt.title("Confusion matrix (PCA)")
 plt.show()
@@ -406,16 +423,210 @@ print("CASO NO PCA\n")
 print("Mejor modelo: SVM (kernel = rbf, C = 10, gamma = 0.15)\n")
 svc = SVC(C = 10, gamma = 0.15)
 svc.fit(X_train, y_train)
-print("Eout train: ",svc.score(X_train,y_train))
+print("Ein train: ",svc.score(X_train,y_train))
 X_test = scaler.transform(X_test)
 print("Eout test: ",svc.score(X_test, y_test))
 
 print("Matriz de confusión con los datos de test")
 
 # Dibujar matriz de confusión
-fig, ax = plt.subplots(figsize=(12, 10))
+fig, ax = plt.subplots(figsize=(10, 8))
 plot_confusion_matrix(svc, X_test, y_test, cmap = 'Blues', ax = ax, xticks_rotation = 45)
 plt.title("Confusion matrix (NO PCA)")
 plt.show()
 
 ################################################################
+
+"""
+    RESULTADOS 10-FOLD CROSS-VALIDATION:
+    
+CASO PCA
+
+
+Regresion Logistica con PCA ...
+
+Grid scores on development set:
+0.668 (+/-0.024) for {'C': 1, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.669 (+/-0.023) for {'C': 1, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.724 (+/-0.026) for {'C': 1, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.723 (+/-0.024) for {'C': 1, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.669 (+/-0.023) for {'C': 10, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.669 (+/-0.023) for {'C': 10, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.724 (+/-0.027) for {'C': 10, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.725 (+/-0.027) for {'C': 10, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.669 (+/-0.023) for {'C': 100, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.669 (+/-0.023) for {'C': 100, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.725 (+/-0.027) for {'C': 100, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.725 (+/-0.027) for {'C': 100, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.669 (+/-0.023) for {'C': 1000, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.669 (+/-0.023) for {'C': 1000, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.725 (+/-0.027) for {'C': 1000, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.725 (+/-0.027) for {'C': 1000, 'multi_class': 'multinomial', 'penalty': 'l2'}
+
+Perceptron multicapa con PCA ...
+
+Grid scores on development set:
+0.934 (+/-0.016) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (50, 50)}
+0.949 (+/-0.014) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (75, 75)}
+0.955 (+/-0.010) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (100, 100)}
+0.932 (+/-0.016) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (50, 50)}
+0.946 (+/-0.015) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (75, 75)}
+0.951 (+/-0.010) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (100, 100)}
+0.932 (+/-0.016) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (50, 50)}
+0.945 (+/-0.014) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (75, 75)}
+0.951 (+/-0.007) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (100, 100)}
+0.923 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (50, 50)}
+0.941 (+/-0.008) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (75, 75)}
+0.950 (+/-0.010) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (100, 100)}
+0.921 (+/-0.013) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (50, 50)}
+0.940 (+/-0.009) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (75, 75)}
+0.948 (+/-0.009) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (100, 100)}
+0.921 (+/-0.013) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (50, 50)}
+0.940 (+/-0.010) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (75, 75)}
+0.948 (+/-0.008) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (100, 100)}
+
+SVM con PCA ...
+
+Grid scores on development set:
+0.916 (+/-0.015) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.898 (+/-0.016) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.894 (+/-0.017) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.856 (+/-0.018) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.832 (+/-0.022) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.823 (+/-0.022) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.942 (+/-0.011) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.922 (+/-0.017) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.913 (+/-0.018) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.919 (+/-0.013) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.881 (+/-0.019) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.865 (+/-0.020) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.919 (+/-0.016) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.898 (+/-0.019) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.894 (+/-0.018) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.866 (+/-0.020) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.833 (+/-0.022) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.824 (+/-0.022) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.938 (+/-0.016) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.922 (+/-0.017) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.913 (+/-0.018) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.919 (+/-0.012) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.881 (+/-0.019) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.865 (+/-0.020) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.913 (+/-0.017) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.898 (+/-0.019) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.894 (+/-0.018) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.868 (+/-0.022) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.834 (+/-0.023) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.824 (+/-0.022) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.938 (+/-0.015) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.922 (+/-0.017) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.913 (+/-0.018) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.919 (+/-0.012) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.881 (+/-0.019) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.865 (+/-0.020) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.946 (+/-0.011) for {'C': 1, 'gamma': 0.15, 'kernel': 'rbf'}
+0.955 (+/-0.014) for {'C': 1, 'gamma': 0.5, 'kernel': 'rbf'}
+0.950 (+/-0.013) for {'C': 1, 'gamma': 0.85, 'kernel': 'rbf'}
+0.962 (+/-0.008) for {'C': 10, 'gamma': 0.15, 'kernel': 'rbf'}
+0.961 (+/-0.014) for {'C': 10, 'gamma': 0.5, 'kernel': 'rbf'}
+0.953 (+/-0.012) for {'C': 10, 'gamma': 0.85, 'kernel': 'rbf'}
+0.960 (+/-0.010) for {'C': 100, 'gamma': 0.15, 'kernel': 'rbf'}
+0.960 (+/-0.014) for {'C': 100, 'gamma': 0.5, 'kernel': 'rbf'}
+0.953 (+/-0.012) for {'C': 100, 'gamma': 0.85, 'kernel': 'rbf'}
+
+--- Pulsar tecla para continuar ---
+
+CASO NO PCA
+
+
+Regresión logística sin PCA ...
+
+Grid scores on development set:
+0.728 (+/-0.027) for {'C': 1, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.729 (+/-0.027) for {'C': 1, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.778 (+/-0.019) for {'C': 1, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.778 (+/-0.020) for {'C': 1, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.728 (+/-0.028) for {'C': 10, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.728 (+/-0.028) for {'C': 10, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.779 (+/-0.020) for {'C': 10, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.779 (+/-0.020) for {'C': 10, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.728 (+/-0.028) for {'C': 100, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.728 (+/-0.028) for {'C': 100, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.779 (+/-0.020) for {'C': 100, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.779 (+/-0.020) for {'C': 100, 'multi_class': 'multinomial', 'penalty': 'l2'}
+0.728 (+/-0.028) for {'C': 1000, 'multi_class': 'ovr', 'penalty': 'l1'}
+0.728 (+/-0.028) for {'C': 1000, 'multi_class': 'ovr', 'penalty': 'l2'}
+0.779 (+/-0.019) for {'C': 1000, 'multi_class': 'multinomial', 'penalty': 'l1'}
+0.779 (+/-0.019) for {'C': 1000, 'multi_class': 'multinomial', 'penalty': 'l2'}
+
+Perceptron multicapa sin PCA ...
+
+Grid scores on development set:
+0.9503 (+/-0.012) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (50, 50)}
+0.9631 (+/-0.009) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (75, 75)}
+0.9656 (+/-0.007) for {'activation': 'tanh', 'alpha': 0.001, 'hidden_layer_sizes': (100, 100)}
+0.9484 (+/-0.011) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (50, 50)}
+0.9592 (+/-0.010) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (75, 75)}
+0.9627 (+/-0.006) for {'activation': 'tanh', 'alpha': 0.0001, 'hidden_layer_sizes': (100, 100)}
+0.9484 (+/-0.011) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (50, 50)}
+0.9591 (+/-0.006) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (75, 75)}
+0.9637 (+/-0.007) for {'activation': 'tanh', 'alpha': 1e-05, 'hidden_layer_sizes': (100, 100)}
+0.9439 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (50, 50)}
+0.9569 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (75, 75)}
+0.9600 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.001, 'hidden_layer_sizes': (100, 100)}
+0.9437 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (50, 50)}
+0.9543 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (75, 75)}
+0.9592 (+/-0.012) for {'activation': 'logistic', 'alpha': 0.0001, 'hidden_layer_sizes': (100, 100)}
+0.9436 (+/-0.012) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (50, 50)}
+0.9540 (+/-0.011) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (75, 75)}
+0.9586 (+/-0.013) for {'activation': 'logistic', 'alpha': 1e-05, 'hidden_layer_sizes': (100, 100)}
+
+SVM sin PCA ...
+
+Grid scores on development set:
+0.934 (+/-0.012) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.916 (+/-0.011) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.912 (+/-0.015) for {'C': 1, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.871 (+/-0.017) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.845 (+/-0.014) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.834 (+/-0.014) for {'C': 1, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.955 (+/-0.007) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.938 (+/-0.010) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.931 (+/-0.009) for {'C': 1, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.935 (+/-0.013) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.893 (+/-0.012) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.876 (+/-0.012) for {'C': 1, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.934 (+/-0.010) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.915 (+/-0.012) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.912 (+/-0.015) for {'C': 10, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.879 (+/-0.010) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.845 (+/-0.014) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.834 (+/-0.014) for {'C': 10, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.953 (+/-0.008) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.938 (+/-0.010) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.931 (+/-0.009) for {'C': 10, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.935 (+/-0.013) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.893 (+/-0.012) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.876 (+/-0.012) for {'C': 10, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.931 (+/-0.008) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.915 (+/-0.012) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.912 (+/-0.015) for {'C': 100, 'coef0': 0.15, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.879 (+/-0.013) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.845 (+/-0.014) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.834 (+/-0.014) for {'C': 100, 'coef0': 0.15, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.953 (+/-0.008) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.15, 'kernel': 'poly'}
+0.938 (+/-0.010) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.5, 'kernel': 'poly'}
+0.931 (+/-0.009) for {'C': 100, 'coef0': 0.85, 'degree': 5, 'gamma': 0.85, 'kernel': 'poly'}
+0.935 (+/-0.013) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.15, 'kernel': 'poly'}
+0.893 (+/-0.012) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.5, 'kernel': 'poly'}
+0.876 (+/-0.012) for {'C': 100, 'coef0': 0.85, 'degree': 8, 'gamma': 0.85, 'kernel': 'poly'}
+0.961 (+/-0.012) for {'C': 1, 'gamma': 0.15, 'kernel': 'rbf'}
+0.966 (+/-0.011) for {'C': 1, 'gamma': 0.5, 'kernel': 'rbf'}
+0.955 (+/-0.011) for {'C': 1, 'gamma': 0.85, 'kernel': 'rbf'}
+0.974 (+/-0.008) for {'C': 10, 'gamma': 0.15, 'kernel': 'rbf'}
+0.969 (+/-0.010) for {'C': 10, 'gamma': 0.5, 'kernel': 'rbf'}
+0.957 (+/-0.010) for {'C': 10, 'gamma': 0.85, 'kernel': 'rbf'}
+0.974 (+/-0.008) for {'C': 100, 'gamma': 0.15, 'kernel': 'rbf'}
+0.969 (+/-0.010) for {'C': 100, 'gamma': 0.5, 'kernel': 'rbf'}
+0.957 (+/-0.010) for {'C': 100, 'gamma': 0.85, 'kernel': 'rbf'}
+"""
